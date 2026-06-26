@@ -1,0 +1,17 @@
+[project]
+name = "sudoku-rl"
+version = "0.1.0"
+description = "RL and fine-tuning experiments for small LLMs playing Sudoku."
+requires-python = ">=3.11"
+dependencies = [
+    "kaggle>=2.2.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.13.0",
+]
+
+[tool.uv]
+package = false
