@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+
+data/radcliffe-3-million-sudoku-puzzles-with-ratings/
+data/rohanrao-sudoku/
+data/bryanpark-sudoku/
