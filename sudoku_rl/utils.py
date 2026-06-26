@@ -1,11 +1,7 @@
 def print_sudoku(sudoku: str) -> None:
     """Print a sudoku string in the terminal using ASCII."""
 
-    invalid = set(sudoku) - set(".123456789")
-    if invalid:
-        raise ValueError(f"Invalid sudoku characters: {invalid}")
-    if len(sudoku) != 81:
-        raise ValueError(f"Expected 81 cells, got {len(sudoku)}.")
+    if not valid_sudoku(sudoku): raise ValueError(f"Invalid sudoku: {sudoku}")
 
     border = "+-------+-------+-------+"
 
@@ -23,3 +19,13 @@ def print_sudoku(sudoku: str) -> None:
 
         if row_index in {2, 5, 8}:
             print(border)
+
+
+def valid_sudoku(sudoku: str) -> bool:
+    """Checks whether a sudoku string is valid."""
+    invalid = set(sudoku) - set(".123456789")
+
+    if invalid: return False
+    if len(sudoku) != 81: return False
+
+    return True
