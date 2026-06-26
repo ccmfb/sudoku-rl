@@ -6,3 +6,5 @@ __pycache__/
 data/radcliffe-3-million-sudoku-puzzles-with-ratings/
 data/rohanrao-sudoku/
 data/bryanpark-sudoku/
+data/train/
+data/eval/
