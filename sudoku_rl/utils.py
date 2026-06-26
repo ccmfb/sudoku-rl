@@ -1,6 +1,40 @@
+def score_attempt(attempt: str, sudoku: str, solution: str) -> float:
+    """Computes score of an attempted solution."""
+    if not valid_solution(attempt): return 0.0
+
+    for index, value in enumerate(sudoku):
+        if value == ".": continue
+        if value != attempt[index]: return 0.0
+
+    missing_count = sudoku.count(".")
+    correct_count = 0
+
+    for index, value in enumerate(sudoku):
+        if value != ".": continue
+        if attempt[index] == solution[index]: correct_count += 1
+
+    return correct_count / missing_count
+
+def valid_sudoku(sudoku: str) -> bool:
+    """Checks whether a sudoku string is valid."""
+    invalid = set(sudoku) - set(".123456789")
+
+    if invalid: return False
+    if len(sudoku) != 81: return False
+
+    return True
+
+def valid_solution(solution: str) -> bool:
+    """Checks whether a solution string to a sudoku is valid."""
+    invalid = set(solution) - set("123456789")
+
+    if invalid: return False
+    if len(solution) != 81: return False
+
+    return True
+
 def print_sudoku(sudoku: str) -> None:
     """Print a sudoku string in the terminal using ASCII."""
-
     if not valid_sudoku(sudoku): raise ValueError(f"Invalid sudoku: {sudoku}")
 
     border = "+-------+-------+-------+"
@@ -19,13 +53,3 @@ def print_sudoku(sudoku: str) -> None:
 
         if row_index in {2, 5, 8}:
             print(border)
-
-
-def valid_sudoku(sudoku: str) -> bool:
-    """Checks whether a sudoku string is valid."""
-    invalid = set(sudoku) - set(".123456789")
-
-    if invalid: return False
-    if len(sudoku) != 81: return False
-
-    return True
