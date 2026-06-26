@@ -2,7 +2,7 @@ import csv
 from collections.abc import Iterator
 from pathlib import Path
 
-from sudoku_rl.utils import valid_sudoku
+from sudoku_rl.utils import valid_sudoku, valid_solution
 
 
 def load_radcliffe_csv(path: str | Path, limit: int | None = None) -> Iterator[dict[str, str]]:
@@ -16,7 +16,7 @@ def load_radcliffe_csv(path: str | Path, limit: int | None = None) -> Iterator[d
             solution = row["solution"].strip()
 
             if not valid_sudoku(sudoku): raise ValueError(f"Invalid sudoku: {sudoku}")
-            if not valid_sudoku(solution): raise ValueError(f"Invalid solution: {solution}")
+            if not valid_solution(solution): raise ValueError(f"Invalid solution: {solution}")
 
             yield {"sudoku": sudoku, "solution": solution}
 
@@ -32,7 +32,7 @@ def load_rohanrao_csv(path: str | Path, limit: int | None = None) -> Iterator[di
             solution = row["solution"].strip()
 
             if not valid_sudoku(sudoku): raise ValueError(f"Invalid sudoku: {sudoku}")
-            if not valid_sudoku(solution): raise ValueError(f"Invalid solution: {solution}")
+            if not valid_solution(solution): raise ValueError(f"Invalid solution: {solution}")
 
             yield {"sudoku": sudoku, "solution": solution}
 
@@ -48,6 +48,6 @@ def load_bryanpark_csv(path: str | Path, limit: int | None = None) -> Iterator[d
             solution = row["solutions"].strip()
 
             if not valid_sudoku(sudoku): raise ValueError(f"Invalid sudoku: {sudoku}")
-            if not valid_sudoku(solution): raise ValueError(f"Invalid solution: {solution}")
+            if not valid_solution(solution): raise ValueError(f"Invalid solution: {solution}")
 
             yield {"sudoku": sudoku, "solution": solution}
