@@ -20,6 +20,23 @@ data/
 
 Everything else under `data/` should stay untracked.
 
+## Train and Eval Splits
+
+Generated train and eval splits should stay local:
+
+```text
+data/train/
+data/eval/
+```
+
+Rows should contain only the canonical Sudoku fields:
+
+```json
+{"sudoku": "...", "solution": "..."}
+```
+
+Prompt and completion formatting should happen outside the data files.
+
 ## Radcliffe Kaggle Dataset
 
 Download the Kaggle dataset into a local, untracked directory:
