@@ -1,6 +1,6 @@
 import pytest
 
-from sudoku_rl.utils import print_sudoku, score_attempt
+from sudoku_rl.utils import evaluate_attempts, format_prompt, print_sudoku, score_attempt
 
 
 SUDOKU = "1..5.37..6.3..8.9......98...1.......8761..........6...........7.8.9.76.47...6.312"
@@ -63,3 +63,28 @@ def test_score_attempt_returns_zero_when_clues_change() -> None:
 
 def test_score_attempt_returns_zero_for_invalid_attempt() -> None:
     assert score_attempt("." * 81, SUDOKU, SOLUTION) == 0.0
+
+
+def test_format_prompt() -> None:
+    assert format_prompt(SUDOKU) == (
+        "Solve this Sudoku:\n"
+        f"{SUDOKU}\n"
+        "Return only the completed 81-character solution."
+    )
+
+
+def test_evaluate_attempts_scores_generated_attempts() -> None:
+    prompts = []
+
+    def generate_attempt(sudoku: str, prompt: str) -> str:
+        prompts.append((sudoku, prompt))
+        return SOLUTION
+
+    score = evaluate_attempts([{"sudoku": SUDOKU, "solution": SOLUTION}], generate_attempt)
+
+    assert score == 1.0
+    assert prompts == [(SUDOKU, format_prompt(SUDOKU))]
+
+
+def test_evaluate_attempts_returns_zero_for_empty_rows() -> None:
+    assert evaluate_attempts([], lambda sudoku, prompt: SOLUTION) == 0.0

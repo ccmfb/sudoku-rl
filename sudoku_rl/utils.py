@@ -1,3 +1,28 @@
+from collections.abc import Callable, Iterable
+
+
+def evaluate_attempts(rows: Iterable[dict[str, str]], generate_attempt: Callable[[str, str], str]) -> float:
+    """Score generated attempts for sudoku rows."""
+    total_score = 0.0
+    count = 0
+
+    for row in rows:
+        sudoku = row["sudoku"]
+        solution = row["solution"]
+        prompt = format_prompt(sudoku)
+        attempt = generate_attempt(sudoku, prompt)
+
+        total_score += score_attempt(attempt, sudoku, solution)
+        count += 1
+
+    if count == 0: return 0.0
+
+    return total_score / count
+
+def format_prompt(sudoku: str) -> str:
+    """Format a sudoku prompt for a model."""
+    return f"Solve this Sudoku:\n{sudoku}\nReturn only the completed 81-character solution."
+
 def score_attempt(attempt: str, sudoku: str, solution: str) -> float:
     """Computes score of an attempted solution."""
     if not valid_solution(attempt): return 0.0

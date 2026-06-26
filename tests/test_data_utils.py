@@ -1,6 +1,6 @@
 import json
 
-from data.utils import extract_splits, load_bryanpark_csv, load_radcliffe_csv, load_rohanrao_csv
+from data.utils import extract_splits, load_bryanpark_csv, load_jsonl, load_radcliffe_csv, load_rohanrao_csv
 
 
 def test_load_radcliffe_csv(tmp_path):
@@ -32,6 +32,18 @@ def test_load_bryanpark_csv(tmp_path):
     path.write_text(f"quizzes,solutions\n{raw_sudoku},{solution}\n")
 
     assert list(load_bryanpark_csv(path)) == [{"sudoku": raw_sudoku.replace("0", "."), "solution": solution}]
+
+
+def test_load_jsonl(tmp_path):
+    sudoku = "." * 81
+    solution = "1" * 81
+    path = tmp_path / "sudokus.jsonl"
+    path.write_text(
+        json.dumps({"sudoku": sudoku, "solution": solution, "extra": "ignored"}) + "\n"
+        + json.dumps({"sudoku": sudoku, "solution": solution}) + "\n"
+    )
+
+    assert list(load_jsonl(path, limit=1)) == [{"sudoku": sudoku, "solution": solution}]
 
 
 def test_extract_splits_writes_train_and_eval_jsonl(tmp_path):
