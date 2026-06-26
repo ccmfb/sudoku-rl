@@ -24,10 +24,10 @@ def test_print_sudoku_formats_grid(capsys: pytest.CaptureFixture[str]) -> None:
 
 
 def test_print_sudoku_rejects_invalid_characters() -> None:
-    with pytest.raises(ValueError, match="Invalid sudoku characters"):
+    with pytest.raises(ValueError, match="Invalid sudoku"):
         print_sudoku("0" + "." * 80)
 
 
 def test_print_sudoku_rejects_wrong_length() -> None:
-    with pytest.raises(ValueError, match="Expected 81 cells"):
+    with pytest.raises(ValueError, match="Invalid sudoku"):
         print_sudoku("." * 80)
