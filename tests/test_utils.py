@@ -74,17 +74,25 @@ def test_format_prompt() -> None:
 
 
 def test_evaluate_attempts_scores_generated_attempts() -> None:
-    prompts = []
+    class FixedPolicy:
+        def __init__(self) -> None:
+            self.prompts = []
 
-    def generate_attempt(sudoku: str, prompt: str) -> str:
-        prompts.append((sudoku, prompt))
-        return SOLUTION
+        def attempt(self, prompt: str) -> str:
+            self.prompts.append(prompt)
+            return SOLUTION
 
-    score = evaluate_attempts([{"sudoku": SUDOKU, "solution": SOLUTION}], generate_attempt)
+    policy = FixedPolicy()
+
+    score = evaluate_attempts([{"sudoku": SUDOKU, "solution": SOLUTION}], policy)
 
     assert score == 1.0
-    assert prompts == [(SUDOKU, format_prompt(SUDOKU))]
+    assert policy.prompts == [format_prompt(SUDOKU)]
 
 
 def test_evaluate_attempts_returns_zero_for_empty_rows() -> None:
-    assert evaluate_attempts([], lambda sudoku, prompt: SOLUTION) == 0.0
+    class FixedPolicy:
+        def attempt(self, prompt: str) -> str:
+            return SOLUTION
+
+    assert evaluate_attempts([], FixedPolicy()) == 0.0
