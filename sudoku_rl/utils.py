@@ -1,7 +1,7 @@
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable
 
 
-def evaluate_attempts(rows: Iterable[dict[str, str]], generate_attempt: Callable[[str, str], str]) -> float:
+def evaluate_attempts(rows: Iterable[dict[str, str]], policy, verbose: bool = False) -> float:
     """Score generated attempts for sudoku rows."""
     total_score = 0.0
     count = 0
@@ -10,10 +10,23 @@ def evaluate_attempts(rows: Iterable[dict[str, str]], generate_attempt: Callable
         sudoku = row["sudoku"]
         solution = row["solution"]
         prompt = format_prompt(sudoku)
-        attempt = generate_attempt(sudoku, prompt)
+        attempt = policy.attempt(prompt)
 
-        total_score += score_attempt(attempt, sudoku, solution)
+        score = score_attempt(attempt, sudoku, solution)
+        total_score += score
         count += 1
+
+        if not verbose: continue
+
+        print()
+        print("ATTEMPT:")
+        print_sudoku(attempt)
+        print()
+        print("SOLUTION:")
+        print_sudoku(solution)
+        print()
+        print(f"SCORE: {score}")
+        print("=*" * 50)
 
     if count == 0: return 0.0
 
@@ -60,7 +73,10 @@ def valid_solution(solution: str) -> bool:
 
 def print_sudoku(sudoku: str) -> None:
     """Print a sudoku string in the terminal using ASCII."""
-    if not valid_sudoku(sudoku): raise ValueError(f"Invalid sudoku: {sudoku}")
+    if not valid_sudoku(sudoku):
+        print(f"INVALID: {sudoku}")
+        return
+
 
     border = "+-------+-------+-------+"
 

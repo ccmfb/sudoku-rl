@@ -27,14 +27,20 @@ def test_print_sudoku_formats_grid(capsys: pytest.CaptureFixture[str]) -> None:
     )
 
 
-def test_print_sudoku_rejects_invalid_characters() -> None:
-    with pytest.raises(ValueError, match="Invalid sudoku"):
-        print_sudoku("0" + "." * 80)
+def test_print_sudoku_prints_invalid_characters(capsys: pytest.CaptureFixture[str]) -> None:
+    sudoku = "0" + "." * 80
+
+    print_sudoku(sudoku)
+
+    assert capsys.readouterr().out == f"INVALID: {sudoku}\n"
 
 
-def test_print_sudoku_rejects_wrong_length() -> None:
-    with pytest.raises(ValueError, match="Invalid sudoku"):
-        print_sudoku("." * 80)
+def test_print_sudoku_prints_wrong_length(capsys: pytest.CaptureFixture[str]) -> None:
+    sudoku = "." * 80
+
+    print_sudoku(sudoku)
+
+    assert capsys.readouterr().out == f"INVALID: {sudoku}\n"
 
 
 def test_score_attempt_returns_one_for_solution() -> None:
@@ -74,17 +80,40 @@ def test_format_prompt() -> None:
 
 
 def test_evaluate_attempts_scores_generated_attempts() -> None:
-    prompts = []
+    class FixedPolicy:
+        def __init__(self) -> None:
+            self.prompts = []
 
-    def generate_attempt(sudoku: str, prompt: str) -> str:
-        prompts.append((sudoku, prompt))
-        return SOLUTION
+        def attempt(self, prompt: str) -> str:
+            self.prompts.append(prompt)
+            return SOLUTION
 
-    score = evaluate_attempts([{"sudoku": SUDOKU, "solution": SOLUTION}], generate_attempt)
+    policy = FixedPolicy()
+
+    score = evaluate_attempts([{"sudoku": SUDOKU, "solution": SOLUTION}], policy)
 
     assert score == 1.0
-    assert prompts == [(SUDOKU, format_prompt(SUDOKU))]
+    assert policy.prompts == [format_prompt(SUDOKU)]
+
+
+def test_evaluate_attempts_verbose_prints_invalid_attempt(capsys: pytest.CaptureFixture[str]) -> None:
+    class FixedPolicy:
+        def attempt(self, prompt: str) -> str:
+            return "123"
+
+    score = evaluate_attempts([{"sudoku": SUDOKU, "solution": SOLUTION}], FixedPolicy(), verbose=True)
+    output = capsys.readouterr().out
+
+    assert score == 0.0
+    assert "ATTEMPT:" in output
+    assert "INVALID: 123" in output
+    assert "SOLUTION:" in output
+    assert "SCORE: 0.0" in output
 
 
 def test_evaluate_attempts_returns_zero_for_empty_rows() -> None:
-    assert evaluate_attempts([], lambda sudoku, prompt: SOLUTION) == 0.0
+    class FixedPolicy:
+        def attempt(self, prompt: str) -> str:
+            return SOLUTION
+
+    assert evaluate_attempts([], FixedPolicy()) == 0.0

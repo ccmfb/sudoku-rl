@@ -1,23 +1,18 @@
-from sudoku_rl.qwen import extract_attempt
+from sudoku_rl.qwen import QwenPolicy
 
 
 ATTEMPT = "123456789" * 9
 
 
-def test_extract_attempt_returns_81_digit_solution() -> None:
-    assert extract_attempt(f"Here is the answer:\n{ATTEMPT}") == ATTEMPT
+def test_qwen_policy_attempt_returns_generated_response() -> None:
+    policy = QwenPolicy.__new__(QwenPolicy)
+    prompts = []
 
+    def complete(prompt: str) -> str:
+        prompts.append(prompt)
+        return f"Here is the answer:\n{ATTEMPT}"
 
-def test_extract_attempt_ignores_whitespace() -> None:
-    spaced_attempt = " ".join(ATTEMPT[index : index + 9] for index in range(0, 81, 9))
+    policy.complete = complete
 
-    assert extract_attempt(spaced_attempt) == ATTEMPT
-
-
-def test_extract_attempt_rejects_zero_or_dots() -> None:
-    assert extract_attempt("." * 81) == ""
-    assert extract_attempt("0" * 81) == ""
-
-
-def test_extract_attempt_returns_empty_string_without_attempt() -> None:
-    assert extract_attempt("I cannot solve this one.") == ""
+    assert policy.attempt("solve this") == f"Here is the answer:\n{ATTEMPT}"
+    assert prompts == ["solve this"]
