@@ -8,3 +8,5 @@ data/rohanrao-sudoku/
 data/bryanpark-sudoku/
 data/train/
 data/eval/
+
+runs/
