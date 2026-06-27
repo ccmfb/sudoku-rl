@@ -14,8 +14,11 @@ dev = [
 ]
 gpu = [
     "accelerate>=1.0",
+    "datasets>=2.20",
+    "peft>=0.12",
     "torch>=2.3",
     "transformers>=4.51.0",
+    "trl>=0.24",
 ]
 
 [tool.uv]
