@@ -1,4 +1,8 @@
-from sudoku_rl.qwen import QwenPolicy
+import pytest
+
+pytestmark = pytest.mark.gpu
+
+QwenPolicy = pytest.importorskip("sudoku_rl.qwen").QwenPolicy
 
 
 ATTEMPT = "123456789" * 9
