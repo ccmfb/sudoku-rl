@@ -15,6 +15,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--limit", default=None, type=int, help="Maximum number of rows to evaluate.")
     parser.add_argument("--max-new-tokens", default=256, type=int, help="Maximum number of generated tokens per prompt.")
     parser.add_argument("--thinking", action="store_true", help="Enable Qwen thinking mode in the chat template.")
+    parser.add_argument("--verbose", action="store_true", help="Print each attempt, solution, and row score.")
 
     return parser.parse_args()
 
@@ -28,7 +29,7 @@ def main() -> None:
     args = parse_args()
     rows = load_jsonl(args.data, limit=args.limit)
     policy = QwenPolicy(args.model, adapter_path=args.adapter, max_new_tokens=args.max_new_tokens, thinking=args.thinking)
-    score = evaluate_attempts(rows, policy)
+    score = evaluate_attempts(rows, policy, verbose=args.verbose)
 
     print(f"model: {args.model}")
     print(f"adapter: {args.adapter or ''}")
