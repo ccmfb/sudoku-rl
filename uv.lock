@@ -1473,6 +1473,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "kaggle" },
+    { name = "python-dotenv" },
 ]
 
 [package.dev-dependencies]
@@ -1487,7 +1488,10 @@ gpu = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "kaggle", specifier = ">=2.2.2" }]
+requires-dist = [
+    { name = "kaggle", specifier = ">=2.2.2" },
+    { name = "python-dotenv", specifier = ">=1.0" },
+]
 
 [package.metadata.requires-dev]
 dev = [

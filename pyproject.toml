@@ -5,6 +5,7 @@ description = "RL and fine-tuning experiments for small LLMs playing Sudoku."
 requires-python = ">=3.11"
 dependencies = [
     "kaggle>=2.2.2",
+    "python-dotenv>=1.0",
 ]
 
 [dependency-groups]
