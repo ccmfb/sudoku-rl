@@ -1,3 +1,21 @@
+import re
+from typing import overload
+
+
+ANSWER_PATTERN = re.compile(r"<answer>\s*(.*?)\s*</answer>", re.DOTALL | re.IGNORECASE)
+
+
+def extract_answer(text: str) -> str:
+    """Extract the last valid 81-digit tagged Sudoku answer."""
+    answers = ANSWER_PATTERN.findall(text)
+
+    for answer_text in reversed(answers):
+        answer = re.sub(r"\D", "", answer_text)
+        if len(answer) == 81: return answer
+
+    return ""
+
+
 class QwenPolicy:
     """Generate Sudoku attempts with Qwen or a Qwen fine-tuned checkpoint."""
 
@@ -21,30 +39,82 @@ class QwenPolicy:
         self.thinking = thinking
         self.model.eval()
 
+    @overload
     def complete(self, prompt: str) -> str:
-        """Generate raw model text for a prompt."""
+        ...
+
+    @overload
+    def complete(self, prompt: list[str]) -> list[str]:
+        ...
+
+    def complete(self, prompt: str | list[str]) -> str | list[str]:
+        """Generate raw model text for one or more prompts."""
         import torch
 
-        messages = [{"role": "user", "content": prompt}]
-        text = self.tokenizer.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=True,
-            enable_thinking=self.thinking,
-        )
-        inputs = self.tokenizer([text], return_tensors="pt").to(self.model.device)
+        single = isinstance(prompt, str)
+        prompts = [prompt] if single else prompt
+        if not prompts: return [] if not single else ""
+
+        if self.thinking:
+            prompts = [
+                (
+                    f"{prompt}\n"
+                    "You may reason through the puzzle first.\n"
+                    "Put the final completed 81-character solution between <answer> and </answer> tags.\n"
+                    "Do not put anything except the final grid inside <answer>."
+                )
+                for prompt in prompts
+            ]
+
+        texts = [
+            self.tokenizer.apply_chat_template(
+                [{"role": "user", "content": prompt}],
+                tokenize=False,
+                add_generation_prompt=True,
+                enable_thinking=self.thinking,
+            )
+            for prompt in prompts
+        ]
+        self.tokenizer.padding_side = "left"
+        if self.tokenizer.pad_token is None: self.tokenizer.pad_token = self.tokenizer.eos_token
+        inputs = self.tokenizer(texts, padding=True, return_tensors="pt").to(self.model.device)
 
         with torch.inference_mode():
-            outputs = self.model.generate(
-                **inputs,
-                max_new_tokens=self.max_new_tokens,
-                do_sample=False,
-            )
+            if self.thinking:
+                outputs = self.model.generate(
+                    **inputs,
+                    max_new_tokens=self.max_new_tokens,
+                    do_sample=True,
+                    temperature=0.6,
+                    top_p=0.95,
+                    top_k=20,
+                )
+            else:
+                outputs = self.model.generate(
+                    **inputs,
+                    max_new_tokens=self.max_new_tokens,
+                    do_sample=False,
+                )
 
-        generated = outputs[0][inputs["input_ids"].shape[-1]:]
+        generated = outputs[:, inputs["input_ids"].shape[-1]:]
+        results = self.tokenizer.batch_decode(generated, skip_special_tokens=True)
 
-        return self.tokenizer.decode(generated, skip_special_tokens=True)
+        if single: return results[0]
 
+        return results
+
+    @overload
     def attempt(self, prompt: str) -> str:
-        """Generate a Sudoku attempt."""
-        return self.complete(prompt)
+        ...
+
+    @overload
+    def attempt(self, prompt: list[str]) -> list[str]:
+        ...
+
+    def attempt(self, prompt: str | list[str]) -> str | list[str]:
+        """Generate Sudoku attempts for one or more prompts."""
+        result = self.complete(prompt)
+        if not self.thinking: return result
+        if isinstance(result, str): return extract_answer(result)
+
+        return [extract_answer(text) for text in result]
