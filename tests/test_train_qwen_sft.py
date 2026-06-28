@@ -1,5 +1,5 @@
-from scripts.train_qwen_sft import format_training_example
-from sudoku_rl.utils import format_prompt
+from sudoku_rl.methods.sft import format_training_example
+from sudoku_rl.tasks.sudoku import format_prompt
 
 
 SUDOKU = "1..5.37..6.3..8.9......98...1.......8761..........6...........7.8.9.76.47...6.312"

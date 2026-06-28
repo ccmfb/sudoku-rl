@@ -5,19 +5,6 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-QWEN_CHAT_EOS_TOKEN = "<|im_end|>"
-
-
-def format_training_example(row: dict[str, str]) -> dict[str, object]:
-    """Format a row for Qwen supervised fine-tuning."""
-    from sudoku_rl.utils import format_prompt
-
-    return {
-        "prompt": [{"role": "user", "content": format_prompt(row["sudoku"])}],
-        "completion": [{"role": "assistant", "content": row["solution"]}],
-        "chat_template_kwargs": {"enable_thinking": False},
-    }
-
 
 def parse_args() -> argparse.Namespace:
     """Parse command line arguments."""
@@ -39,50 +26,23 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     """Train a Qwen Sudoku policy with SFT LoRA."""
+    from sudoku_rl.methods.sft import train_qwen_sft
+
     args = parse_args()
 
-    import torch
-    from datasets import Dataset
-    from peft import LoraConfig
-    from transformers import AutoTokenizer
-    from trl import SFTConfig, SFTTrainer
-
-    from data.utils import load_jsonl
-
-    rows = list(load_jsonl(args.train))
-    train_dataset = Dataset.from_list([format_training_example(row) for row in rows])
-    tokenizer = AutoTokenizer.from_pretrained(args.model)
-
-    trainer = SFTTrainer(
+    train_qwen_sft(
+        train_path=args.train,
         model=args.model,
-        args=SFTConfig(
-            output_dir=str(args.output_dir),
-            max_steps=args.max_steps,
-            per_device_train_batch_size=args.batch_size,
-            gradient_accumulation_steps=args.gradient_accumulation_steps,
-            learning_rate=args.learning_rate,
-            max_length=args.max_seq_length,
-            bf16=True,
-            gradient_checkpointing=True,
-            save_steps=100,
-            logging_steps=10,
-            report_to="none",
-            model_init_kwargs={"dtype": torch.bfloat16},
-            eos_token=QWEN_CHAT_EOS_TOKEN,
-        ),
-        train_dataset=train_dataset,
-        processing_class=tokenizer,
-        peft_config=LoraConfig(
-            r=args.lora_r,
-            lora_alpha=args.lora_alpha,
-            lora_dropout=args.lora_dropout,
-            target_modules="all-linear",
-            task_type="CAUSAL_LM",
-        ),
+        output_dir=args.output_dir,
+        max_steps=args.max_steps,
+        batch_size=args.batch_size,
+        gradient_accumulation_steps=args.gradient_accumulation_steps,
+        learning_rate=args.learning_rate,
+        max_seq_length=args.max_seq_length,
+        lora_r=args.lora_r,
+        lora_alpha=args.lora_alpha,
+        lora_dropout=args.lora_dropout,
     )
-
-    trainer.train()
-    trainer.save_model(str(args.output_dir))
 
 
 if __name__ == "__main__":

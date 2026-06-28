@@ -1,19 +1,9 @@
-import re
 from typing import overload
 
+from sudoku_rl.tasks.sudoku import extract_answer
 
-ANSWER_PATTERN = re.compile(r"<answer>\s*(.*?)\s*</answer>", re.DOTALL | re.IGNORECASE)
 
-
-def extract_answer(text: str) -> str:
-    """Extract the last valid 81-digit tagged Sudoku answer."""
-    answers = ANSWER_PATTERN.findall(text)
-
-    for answer_text in reversed(answers):
-        answer = re.sub(r"\D", "", answer_text)
-        if len(answer) == 81: return answer
-
-    return ""
+QWEN_CHAT_EOS_TOKEN = "<|im_end|>"
 
 
 class QwenPolicy:

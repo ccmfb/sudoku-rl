@@ -3,11 +3,12 @@ import types
 
 import pytest
 
+from sudoku_rl.tasks.sudoku import extract_answer
+
 pytestmark = pytest.mark.gpu
 
-qwen = pytest.importorskip("sudoku_rl.qwen")
+qwen = pytest.importorskip("sudoku_rl.models.qwen")
 QwenPolicy = qwen.QwenPolicy
-extract_answer = qwen.extract_answer
 
 
 ATTEMPT = "123456789" * 9

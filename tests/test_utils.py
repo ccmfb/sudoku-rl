@@ -1,6 +1,8 @@
 import pytest
 
-from sudoku_rl.utils import evaluate_attempts, format_prompt, print_sudoku, score_attempt
+from sudoku_rl.eval.evaluate import evaluate_attempts
+from sudoku_rl.tasks.rewards import score_attempt
+from sudoku_rl.tasks.sudoku import format_prompt, print_sudoku
 
 
 SUDOKU = "1..5.37..6.3..8.9......98...1.......8761..........6...........7.8.9.76.47...6.312"
