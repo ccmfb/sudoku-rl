@@ -37,6 +37,45 @@ Rows should contain only the canonical Sudoku fields:
 
 Prompt and completion formatting should happen outside the data files.
 
+
+Build the main split from any raw datasets present locally:
+
+```bash
+python -m data.split
+```
+
+The split builder writes:
+
+```text
+data/train/all.jsonl
+data/eval/all.jsonl
+```
+
+Train/eval assignment is deterministic by completed solution grid, so every
+puzzle with the same solution lands in the same split. Eval keeps one puzzle per
+held-out solution, which keeps masked diagnostic evals from sampling solved
+grids seen during training.
+
+
+Build the 100-row eval sample used for diagnostic eval sets:
+
+```bash
+python -m data.sample
+```
+
+This reads `data/eval/all.jsonl` and writes `data/eval/sample_100.jsonl`.
+
+
+Build masked diagnostic eval sets from the 100-row eval sample:
+
+```bash
+python -m data.mask
+```
+
+This reads `data/eval/sample_100.jsonl` and writes `missing_1_100.jsonl`,
+`missing_2_100.jsonl`, `missing_5_100.jsonl`, `missing_10_100.jsonl`,
+`missing_20_100.jsonl`, and `missing_40_100.jsonl` under `data/eval/`.
+
 ## Radcliffe Kaggle Dataset
 
 Download the Kaggle dataset into a local, untracked directory:
