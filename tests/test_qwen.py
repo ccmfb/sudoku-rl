@@ -45,6 +45,19 @@ def test_qwen_policy_attempt_extracts_answer_when_thinking() -> None:
     assert prompts == ["solve this"]
 
 
+def test_qwen_policy_attempt_extracts_batched_answers_when_thinking() -> None:
+    policy = QwenPolicy.__new__(QwenPolicy)
+
+    def complete(prompts: list[str]) -> list[str]:
+        assert prompts == ["first", "second"]
+        return [f"<answer>{ATTEMPT}</answer>", "<answer>123</answer>"]
+
+    policy.complete = complete
+    policy.thinking = True
+
+    assert policy.attempt(["first", "second"]) == [ATTEMPT, ""]
+
+
 def test_qwen_policy_attempt_preserves_raw_response_without_tagged_answer() -> None:
     policy = QwenPolicy.__new__(QwenPolicy)
     response = f"Here is the answer:\n{ATTEMPT}"
@@ -92,21 +105,32 @@ def test_qwen_policy_complete_uses_generation_settings(monkeypatch, thinking: bo
         def to(self, device):
             return self
 
+    class Outputs:
+        def __getitem__(self, key):
+            return ["generated"]
+
     class Tokenizer:
         def __init__(self):
             self.messages = None
             self.thinking = None
+            self.texts = None
+            self.padding = None
+            self.padding_side = None
+            self.pad_token = None
+            self.eos_token = "<eos>"
 
         def apply_chat_template(self, messages, tokenize, add_generation_prompt, enable_thinking):
             self.messages = messages
             self.thinking = enable_thinking
             return "chat text"
 
-        def __call__(self, texts, return_tensors):
+        def __call__(self, texts, padding, return_tensors):
+            self.texts = texts
+            self.padding = padding
             return Inputs(input_ids=InputIds())
 
-        def decode(self, generated, skip_special_tokens):
-            return "decoded"
+        def batch_decode(self, generated, skip_special_tokens):
+            return ["decoded"]
 
     class Model:
         device = "cpu"
@@ -116,7 +140,7 @@ def test_qwen_policy_complete_uses_generation_settings(monkeypatch, thinking: bo
 
         def generate(self, **kwargs):
             self.generation_kwargs = kwargs
-            return [[0, 1, 2]]
+            return Outputs()
 
     monkeypatch.setitem(sys.modules, "torch", types.SimpleNamespace(inference_mode=lambda: InferenceMode()))
 
@@ -128,6 +152,10 @@ def test_qwen_policy_complete_uses_generation_settings(monkeypatch, thinking: bo
 
     assert policy.complete("solve this") == "decoded"
     assert policy.tokenizer.thinking is thinking
+    assert policy.tokenizer.texts == ["chat text"]
+    assert policy.tokenizer.padding is True
+    assert policy.tokenizer.padding_side == "left"
+    assert policy.tokenizer.pad_token == "<eos>"
 
     prompt = policy.tokenizer.messages[0]["content"]
     if thinking:

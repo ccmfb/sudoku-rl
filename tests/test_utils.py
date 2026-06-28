@@ -96,6 +96,31 @@ def test_evaluate_attempts_scores_generated_attempts() -> None:
     assert policy.prompts == [format_prompt(SUDOKU)]
 
 
+def test_evaluate_attempts_batches_prompts() -> None:
+    class FixedPolicy:
+        def __init__(self) -> None:
+            self.batches = []
+            self.attempts = [SOLUTION, "123", SOLUTION]
+            self.index = 0
+
+        def attempt(self, prompts: list[str]) -> list[str]:
+            self.batches.append(prompts)
+            attempts = self.attempts[self.index : self.index + len(prompts)]
+            self.index += len(prompts)
+            return attempts
+
+    rows = [{"sudoku": SUDOKU, "solution": SOLUTION} for _ in range(3)]
+    policy = FixedPolicy()
+
+    score = evaluate_attempts(rows, policy, batch_size=2)
+
+    assert score == pytest.approx(2 / 3)
+    assert policy.batches == [
+        [format_prompt(SUDOKU), format_prompt(SUDOKU)],
+        [format_prompt(SUDOKU)],
+    ]
+
+
 def test_evaluate_attempts_verbose_prints_invalid_attempt(capsys: pytest.CaptureFixture[str]) -> None:
     class FixedPolicy:
         def attempt(self, prompt: str) -> str:

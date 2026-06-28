@@ -1,4 +1,5 @@
 import re
+from typing import overload
 
 
 ANSWER_PATTERN = re.compile(r"<answer>\s*(.*?)\s*</answer>", re.DOTALL | re.IGNORECASE)
@@ -38,26 +39,45 @@ class QwenPolicy:
         self.thinking = thinking
         self.model.eval()
 
+    @overload
     def complete(self, prompt: str) -> str:
-        """Generate raw model text for a prompt."""
+        ...
+
+    @overload
+    def complete(self, prompt: list[str]) -> list[str]:
+        ...
+
+    def complete(self, prompt: str | list[str]) -> str | list[str]:
+        """Generate raw model text for one or more prompts."""
         import torch
 
-        if self.thinking:
-            prompt = (
-                f"{prompt}\n"
-                "You may reason through the puzzle first.\n"
-                "Put the final completed 81-character solution between <answer> and </answer> tags.\n"
-                "Do not put anything except the final grid inside <answer>."
-            )
+        single = isinstance(prompt, str)
+        prompts = [prompt] if single else prompt
+        if not prompts: return [] if not single else ""
 
-        messages = [{"role": "user", "content": prompt}]
-        text = self.tokenizer.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=True,
-            enable_thinking=self.thinking,
-        )
-        inputs = self.tokenizer([text], return_tensors="pt").to(self.model.device)
+        if self.thinking:
+            prompts = [
+                (
+                    f"{prompt}\n"
+                    "You may reason through the puzzle first.\n"
+                    "Put the final completed 81-character solution between <answer> and </answer> tags.\n"
+                    "Do not put anything except the final grid inside <answer>."
+                )
+                for prompt in prompts
+            ]
+
+        texts = [
+            self.tokenizer.apply_chat_template(
+                [{"role": "user", "content": prompt}],
+                tokenize=False,
+                add_generation_prompt=True,
+                enable_thinking=self.thinking,
+            )
+            for prompt in prompts
+        ]
+        self.tokenizer.padding_side = "left"
+        if self.tokenizer.pad_token is None: self.tokenizer.pad_token = self.tokenizer.eos_token
+        inputs = self.tokenizer(texts, padding=True, return_tensors="pt").to(self.model.device)
 
         with torch.inference_mode():
             if self.thinking:
@@ -76,13 +96,25 @@ class QwenPolicy:
                     do_sample=False,
                 )
 
-        generated = outputs[0][inputs["input_ids"].shape[-1]:]
+        generated = outputs[:, inputs["input_ids"].shape[-1]:]
+        results = self.tokenizer.batch_decode(generated, skip_special_tokens=True)
 
-        return self.tokenizer.decode(generated, skip_special_tokens=True)
+        if single: return results[0]
 
+        return results
+
+    @overload
     def attempt(self, prompt: str) -> str:
-        """Generate a Sudoku attempt."""
-        result = self.complete(prompt)
-        if self.thinking: return extract_answer(result)
+        ...
 
-        return result
+    @overload
+    def attempt(self, prompt: list[str]) -> list[str]:
+        ...
+
+    def attempt(self, prompt: str | list[str]) -> str | list[str]:
+        """Generate Sudoku attempts for one or more prompts."""
+        result = self.complete(prompt)
+        if not self.thinking: return result
+        if isinstance(result, str): return extract_answer(result)
+
+        return [extract_answer(text) for text in result]
