@@ -105,9 +105,9 @@ def test_evaluate_attempts_verbose_prints_invalid_attempt(capsys: pytest.Capture
     output = capsys.readouterr().out
 
     assert score == 0.0
-    assert "ATTEMPT:" in output
+    assert "ATTEMPT 0:" in output
     assert "INVALID: 123" in output
-    assert "SOLUTION:" in output
+    assert "SOLUTION 0:" in output
     assert "SCORE: 0.0" in output
 
 

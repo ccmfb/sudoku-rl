@@ -6,7 +6,7 @@ def evaluate_attempts(rows: Iterable[dict[str, str]], policy, verbose: bool = Fa
     total_score = 0.0
     count = 0
 
-    for row in rows:
+    for row_index, row in enumerate(rows):
         sudoku = row["sudoku"]
         solution = row["solution"]
         prompt = format_prompt(sudoku)
@@ -19,10 +19,10 @@ def evaluate_attempts(rows: Iterable[dict[str, str]], policy, verbose: bool = Fa
         if not verbose: continue
 
         print()
-        print("ATTEMPT:")
+        print(f"ATTEMPT {row_index}:")
         print_sudoku(attempt)
         print()
-        print("SOLUTION:")
+        print(f"SOLUTION {row_index}:")
         print_sudoku(solution)
         print()
         print(f"SCORE: {score}")
