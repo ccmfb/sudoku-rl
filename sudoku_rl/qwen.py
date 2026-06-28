@@ -1,3 +1,20 @@
+import re
+
+
+ANSWER_PATTERN = re.compile(r"<answer>\s*(.*?)\s*</answer>", re.DOTALL | re.IGNORECASE)
+
+
+def extract_answer(text: str) -> str:
+    """Extract the last valid 81-digit tagged Sudoku answer."""
+    answers = ANSWER_PATTERN.findall(text)
+
+    for answer_text in reversed(answers):
+        answer = re.sub(r"\D", "", answer_text)
+        if len(answer) == 81: return answer
+
+    return ""
+
+
 class QwenPolicy:
     """Generate Sudoku attempts with Qwen or a Qwen fine-tuned checkpoint."""
 
@@ -25,6 +42,14 @@ class QwenPolicy:
         """Generate raw model text for a prompt."""
         import torch
 
+        if self.thinking:
+            prompt = (
+                f"{prompt}\n"
+                "You may reason through the puzzle first.\n"
+                "Put the final completed 81-character solution between <answer> and </answer> tags.\n"
+                "Do not put anything except the final grid inside <answer>."
+            )
+
         messages = [{"role": "user", "content": prompt}]
         text = self.tokenizer.apply_chat_template(
             messages,
@@ -35,11 +60,21 @@ class QwenPolicy:
         inputs = self.tokenizer([text], return_tensors="pt").to(self.model.device)
 
         with torch.inference_mode():
-            outputs = self.model.generate(
-                **inputs,
-                max_new_tokens=self.max_new_tokens,
-                do_sample=False,
-            )
+            if self.thinking:
+                outputs = self.model.generate(
+                    **inputs,
+                    max_new_tokens=self.max_new_tokens,
+                    do_sample=True,
+                    temperature=0.6,
+                    top_p=0.95,
+                    top_k=20,
+                )
+            else:
+                outputs = self.model.generate(
+                    **inputs,
+                    max_new_tokens=self.max_new_tokens,
+                    do_sample=False,
+                )
 
         generated = outputs[0][inputs["input_ids"].shape[-1]:]
 
@@ -47,4 +82,7 @@ class QwenPolicy:
 
     def attempt(self, prompt: str) -> str:
         """Generate a Sudoku attempt."""
-        return self.complete(prompt)
+        result = self.complete(prompt)
+        if self.thinking: return extract_answer(result)
+
+        return result
