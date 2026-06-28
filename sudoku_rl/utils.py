@@ -34,7 +34,13 @@ def evaluate_attempts(rows: Iterable[dict[str, str]], policy, verbose: bool = Fa
 
 def format_prompt(sudoku: str) -> str:
     """Format a sudoku prompt for a model."""
-    return f"Solve this Sudoku:\n{sudoku}\nReturn only the completed 81-character solution."
+    return (
+        f"Solve this Sudoku:\n"
+        f"{sudoku}\n"
+        "You may reason through the puzzle first.\n"
+        "Put the final completed 81-character solution between <answer> and </answer> tags.\n"
+        "Do not put anything except the final grid inside <answer>."
+    )
 
 def score_attempt(attempt: str, sudoku: str, solution: str) -> float:
     """Computes score of an attempted solution."""

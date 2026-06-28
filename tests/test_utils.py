@@ -75,7 +75,9 @@ def test_format_prompt() -> None:
     assert format_prompt(SUDOKU) == (
         "Solve this Sudoku:\n"
         f"{SUDOKU}\n"
-        "Return only the completed 81-character solution."
+        "You may reason through the puzzle first.\n"
+        "Put the final completed 81-character solution between <answer> and </answer> tags.\n"
+        "Do not put anything except the final grid inside <answer>."
     )
 
 

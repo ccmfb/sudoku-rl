@@ -11,6 +11,6 @@ def test_format_training_example_uses_prompt_completion_chat_shape() -> None:
 
     assert example == {
         "prompt": [{"role": "user", "content": format_prompt(SUDOKU)}],
-        "completion": [{"role": "assistant", "content": SOLUTION}],
+        "completion": [{"role": "assistant", "content": f"<answer>{SOLUTION}</answer>"}],
         "chat_template_kwargs": {"enable_thinking": False},
     }

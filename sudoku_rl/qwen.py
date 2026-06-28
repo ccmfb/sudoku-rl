@@ -1,3 +1,20 @@
+import re
+
+
+ANSWER_PATTERN = re.compile(r"<answer>\s*(.*?)\s*</answer>", re.DOTALL | re.IGNORECASE)
+
+
+def extract_answer(text: str) -> str:
+    """Extract an 81-digit Sudoku answer from answer tags."""
+    answers = ANSWER_PATTERN.findall(text)
+
+    for answer_text in reversed(answers):
+        answer = re.sub(r"\D", "", answer_text)
+        if len(answer) == 81: return answer
+
+    return ""
+
+
 class QwenPolicy:
     """Generate Sudoku attempts with Qwen or a Qwen fine-tuned checkpoint."""
 
@@ -46,5 +63,7 @@ class QwenPolicy:
         return self.tokenizer.decode(generated, skip_special_tokens=True)
 
     def attempt(self, prompt: str) -> str:
-        """Generate a Sudoku attempt."""
-        return self.complete(prompt)
+        """Generate a parsed Sudoku attempt."""
+        result = self.complete(prompt)
+        print(result)
+        return extract_answer(result)

@@ -14,7 +14,7 @@ def format_training_example(row: dict[str, str]) -> dict[str, object]:
 
     return {
         "prompt": [{"role": "user", "content": format_prompt(row["sudoku"])}],
-        "completion": [{"role": "assistant", "content": row["solution"]}],
+        "completion": [{"role": "assistant", "content": f"<answer>{row['solution']}</answer>"}],
         "chat_template_kwargs": {"enable_thinking": False},
     }
 
