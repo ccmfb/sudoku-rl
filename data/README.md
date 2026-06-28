@@ -65,6 +65,17 @@ python -m data.sample
 
 This reads `data/eval/all.jsonl` and writes `data/eval/sample_100.jsonl`.
 
+
+Build masked diagnostic eval sets from the 100-row eval sample:
+
+```bash
+python -m data.mask
+```
+
+This reads `data/eval/sample_100.jsonl` and writes `missing_1_100.jsonl`,
+`missing_2_100.jsonl`, `missing_5_100.jsonl`, `missing_10_100.jsonl`,
+`missing_20_100.jsonl`, and `missing_40_100.jsonl` under `data/eval/`.
+
 ## Radcliffe Kaggle Dataset
 
 Download the Kaggle dataset into a local, untracked directory:
