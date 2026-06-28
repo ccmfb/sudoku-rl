@@ -56,6 +56,15 @@ puzzle with the same solution lands in the same split. Eval keeps one puzzle per
 held-out solution, which keeps masked diagnostic evals from sampling solved
 grids seen during training.
 
+
+Build the 100-row eval sample used for diagnostic eval sets:
+
+```bash
+python -m data.sample
+```
+
+This reads `data/eval/all.jsonl` and writes `data/eval/sample_100.jsonl`.
+
 ## Radcliffe Kaggle Dataset
 
 Download the Kaggle dataset into a local, untracked directory:
