@@ -106,7 +106,8 @@ uv run python scripts/eval_qwen.py --data data/eval/missing_1_100.jsonl --model 
 
 100 puzzles, one missing cell each: `data/eval/missing_1_100.jsonl`.
 
-| model | score |
-| --- | ---: |
-| Qwen3-8B, no reasoning | 0.49 |
-| GPT-5.5, no reasoning | 0.94 |
+| model | details | score |
+| --- | --- | ---: |
+| Qwen3-8B, no reasoning | base | 0.49 |
+| GPT-5.5, no reasoning | base | 0.94 |
+| Qwen/Qwen3-8B | `runs/qwen3-8b-sft-lora-all-500steps`, `thinking=False`, `max_new_tokens=256`, `batch_size=8` | 0.98 |
