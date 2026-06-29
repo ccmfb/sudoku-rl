@@ -104,7 +104,19 @@ class QwenPolicy:
     def attempt(self, prompt: str | list[str]) -> str | list[str]:
         """Generate Sudoku attempts for one or more prompts."""
         result = self.complete(prompt)
-        if not self.thinking: return result
-        if isinstance(result, str): return extract_answer(result)
+        if isinstance(result, str):
+            answer = extract_answer(result)
+            if answer: return answer
+            if self.thinking: return ""
+            return result
 
-        return [extract_answer(text) for text in result]
+        attempts = []
+        for text in result:
+            answer = extract_answer(text)
+            if answer:
+                attempts.append(answer)
+                continue
+
+            attempts.append("" if self.thinking else text)
+
+        return attempts

@@ -12,8 +12,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--train", required=True, type=Path, help="Path to JSONL rows with sudoku and solution fields.")
     parser.add_argument("--model", default="Qwen/Qwen3-8B", help="Qwen model name or checkpoint path.")
     parser.add_argument("--output-dir", required=True, type=Path, help="Directory for LoRA adapter checkpoints.")
+    parser.add_argument("--target", choices=["no-thinking", "thinking"], default="no-thinking", help="SFT example shape.")
     parser.add_argument("--max-steps", default=500, type=int, help="Maximum optimizer steps.")
-    parser.add_argument("--batch-size", default=1, type=int, help="Per-device train batch size.")
+    parser.add_argument("--batch-size", default=8, type=int, help="Per-device train batch size.")
     parser.add_argument("--gradient-accumulation-steps", default=8, type=int, help="Gradient accumulation steps.")
     parser.add_argument("--learning-rate", default=2e-4, type=float, help="LoRA learning rate.")
     parser.add_argument("--max-seq-length", default=512, type=int, help="Maximum tokenized sequence length.")
@@ -26,22 +27,25 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     """Train a Qwen Sudoku policy with SFT LoRA."""
-    from sudoku_rl.methods.sft import train_qwen_sft
+    from sudoku_rl.methods.sft import EXAMPLE_BUILDERS, train_sft
+    from sudoku_rl.models.peft import make_lora_config
+    from sudoku_rl.models.qwen import QWEN_CHAT_EOS_TOKEN
 
     args = parse_args()
+    peft_config = make_lora_config(r=args.lora_r, alpha=args.lora_alpha, dropout=args.lora_dropout)
 
-    train_qwen_sft(
-        train_path=args.train,
+    train_sft(
+        args.train,
         model=args.model,
         output_dir=args.output_dir,
+        example_builder=EXAMPLE_BUILDERS[args.target],
         max_steps=args.max_steps,
         batch_size=args.batch_size,
         gradient_accumulation_steps=args.gradient_accumulation_steps,
         learning_rate=args.learning_rate,
         max_seq_length=args.max_seq_length,
-        lora_r=args.lora_r,
-        lora_alpha=args.lora_alpha,
-        lora_dropout=args.lora_dropout,
+        peft_config=peft_config,
+        eos_token=QWEN_CHAT_EOS_TOKEN,
     )
 
 

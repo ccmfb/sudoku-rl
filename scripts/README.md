@@ -25,9 +25,9 @@ Train a first real LoRA adapter on the local Radcliffe split:
 
 ```bash
 python scripts/train_qwen_sft.py \
-  --train data/train/radcliffe_1000.jsonl \
+  --train data/train/all.jsonl \
   --model Qwen/Qwen3-8B \
-  --output-dir runs/qwen3-8b-sft-lora-radcliffe-1000-500steps \
+  --output-dir runs/qwen3-8b-sft-lora-all-500steps \
   --max-steps 500
 ```
 
