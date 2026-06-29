@@ -72,6 +72,18 @@ def test_qwen_policy_attempt_preserves_raw_response_without_tagged_answer() -> N
     assert policy.attempt("solve this") == response
 
 
+def test_qwen_policy_attempt_extracts_tagged_answer_without_thinking() -> None:
+    policy = QwenPolicy.__new__(QwenPolicy)
+
+    def complete(prompt: str) -> str:
+        return f"<answer>{ATTEMPT}</answer>"
+
+    policy.complete = complete
+    policy.thinking = False
+
+    assert policy.attempt("solve this") == ATTEMPT
+
+
 def test_qwen_policy_attempt_returns_empty_answer_when_thinking_without_tagged_answer() -> None:
     policy = QwenPolicy.__new__(QwenPolicy)
 
