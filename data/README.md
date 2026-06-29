@@ -1,35 +1,16 @@
 # Data
 
-This directory is for dataset notes, small examples, and data-loading helpers.
+This directory contains small data helpers, checked-in examples, and local-only Sudoku datasets.
 
-Only lightweight, reviewable files should be committed here. Downloaded datasets
-and generated artifacts should stay local.
+Large raw datasets and generated outputs are ignored by Git. Keep them local and regenerate them from the scripts here.
 
-## Tracked Structure
+## Canonical Format
 
-```text
-data/
-  README.md
-  utils.py
-  examples/
-```
+Sudoku boards are represented as 81-character strings.
 
-- `README.md` documents the data directory.
-- `utils.py` holds small shared data helpers.
-- `examples/` holds small checked-in examples.
-
-Everything else under `data/` should stay untracked.
-
-## Train and Eval Splits
-
-Generated train and eval splits should stay local:
-
-```text
-data/train/
-data/eval/
-```
-
-Rows should contain only the canonical Sudoku fields:
+- `sudoku`: digits `1`-`9` plus `.` for missing cells
+- `solution`: digits `1`-`9` only
+- JSONL rows contain only canonical fields:
 
 ```json
 {"sudoku": "...", "solution": "..."}
@@ -37,122 +18,81 @@ Rows should contain only the canonical Sudoku fields:
 
 Prompt and completion formatting should happen outside the data files.
 
+## Committed Files
 
-Build the main split from any raw datasets present locally:
-
-```bash
-python -m data.split
+```text
+data/
+  README.md
+  utils.py
+  split.py
+  sample.py
+  mask.py
+  examples/
+    radcliffe_10.jsonl
 ```
 
-The split builder writes:
+`utils.py` validates and normalizes source rows. `split.py`, `sample.py`, and `mask.py` build the local train and eval artifacts.
+
+## Local Source Datasets
+
+These paths are ignored by Git and may exist only in a local checkout.
+
+| Path | Source | CSV fields | Blank cells | Rows |
+| --- | --- | --- | --- | --- |
+| `data/radcliffe-3-million-sudoku-puzzles-with-ratings/sudoku-3m.csv` | `radcliffe/3-million-sudoku-puzzles-with-ratings` | `id,puzzle,solution,clues,difficulty` | `.` | 3,000,000 |
+| `data/rohanrao-sudoku/sudoku.csv` | `rohanrao/sudoku` | `puzzle,solution` | `0`, converted to `.` | 9,000,000 |
+| `data/bryanpark-sudoku/sudoku.csv` | `bryanpark/sudoku` | `quizzes,solutions` | `0`, converted to `.` | 1,000,000 |
+
+Download with the Kaggle CLI after `uv sync` and Kaggle authentication. Place each CSV at the path shown above.
+
+## Build Flow
+
+Build the full train/eval split from whatever source CSVs are present locally:
+
+```bash
+uv run python -m data.split
+```
+
+This writes:
 
 ```text
 data/train/all.jsonl
 data/eval/all.jsonl
 ```
 
-Train/eval assignment is deterministic by completed solution grid, so every
-puzzle with the same solution lands in the same split. Eval keeps one puzzle per
-held-out solution, which keeps masked diagnostic evals from sampling solved
-grids seen during training.
+With all three source datasets present, the current output has 12,348,899 train rows and 651,101 eval rows.
 
+Train/eval assignment is deterministic by completed solution grid. A solution is assigned to eval when its BLAKE2b hash falls in the held-out 5 percent. Eval keeps one row per held-out solution.
 
-Build the 100-row eval sample used for diagnostic eval sets:
+Build the deterministic 100-row eval sample:
 
 ```bash
-python -m data.sample
+uv run python -m data.sample
 ```
 
-This reads `data/eval/all.jsonl` and writes `data/eval/sample_100.jsonl`.
-
-
-Build masked diagnostic eval sets from the 100-row eval sample:
-
-```bash
-python -m data.mask
-```
-
-This reads `data/eval/sample_100.jsonl` and writes `missing_1_100.jsonl`,
-`missing_2_100.jsonl`, `missing_5_100.jsonl`, `missing_10_100.jsonl`,
-`missing_20_100.jsonl`, and `missing_40_100.jsonl` under `data/eval/`.
-
-## Radcliffe Kaggle Dataset
-
-Download the Kaggle dataset into a local, untracked directory:
-
-```bash
-uv sync
-source .venv/bin/activate
-
-mkdir -p data/radcliffe-3-million-sudoku-puzzles-with-ratings
-
-kaggle datasets download \
-  -d radcliffe/3-million-sudoku-puzzles-with-ratings \
-  -f sudoku-3m.csv \
-  -p data/radcliffe-3-million-sudoku-puzzles-with-ratings
-
-unzip data/radcliffe-3-million-sudoku-puzzles-with-ratings/sudoku-3m.csv.zip \
-  -d data/radcliffe-3-million-sudoku-puzzles-with-ratings
-
-rm data/radcliffe-3-million-sudoku-puzzles-with-ratings/sudoku-3m.csv.zip
-```
-
-The extracted CSV is:
+This reads `data/eval/all.jsonl` and writes:
 
 ```text
-data/radcliffe-3-million-sudoku-puzzles-with-ratings/sudoku-3m.csv
+data/eval/sample_100.jsonl
 ```
 
-## Rohan Rao Kaggle Dataset
-
-Download the Kaggle dataset into a local, untracked directory:
+Build near-solved diagnostic eval sets:
 
 ```bash
-uv sync
-source .venv/bin/activate
-
-mkdir -p data/rohanrao-sudoku
-
-kaggle datasets download \
-  -d rohanrao/sudoku \
-  -f sudoku.csv \
-  -p data/rohanrao-sudoku
-
-unzip data/rohanrao-sudoku/sudoku.csv.zip \
-  -d data/rohanrao-sudoku
-
-rm data/rohanrao-sudoku/sudoku.csv.zip
+uv run python -m data.mask
 ```
 
-The extracted CSV is:
+This reads `data/eval/sample_100.jsonl`, masks completed solutions, and writes 100-row files with exactly 1, 2, 5, 10, 20, or 40 missing cells:
 
 ```text
-data/rohanrao-sudoku/sudoku.csv
+data/eval/missing_1_100.jsonl
+data/eval/missing_2_100.jsonl
+data/eval/missing_5_100.jsonl
+data/eval/missing_10_100.jsonl
+data/eval/missing_20_100.jsonl
+data/eval/missing_40_100.jsonl
 ```
 
-## Bryan Park Kaggle Dataset
+## Notes
 
-Download the Kaggle dataset into a local, untracked directory:
-
-```bash
-uv sync
-source .venv/bin/activate
-
-mkdir -p data/bryanpark-sudoku
-
-kaggle datasets download \
-  -d bryanpark/sudoku \
-  -f sudoku.csv \
-  -p data/bryanpark-sudoku
-
-unzip data/bryanpark-sudoku/sudoku.csv.zip \
-  -d data/bryanpark-sudoku
-
-rm data/bryanpark-sudoku/sudoku.csv.zip
-```
-
-The extracted CSV is:
-
-```text
-data/bryanpark-sudoku/sudoku.csv
-```
+`data/__pycache__/`, raw Kaggle folders, `data/train/`, and `data/eval/` are generated or local-only artifacts and should not be committed.
