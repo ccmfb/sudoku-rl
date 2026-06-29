@@ -24,8 +24,8 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     """Evaluate Qwen on a Sudoku JSONL file."""
     from data.utils import load_jsonl
-    from sudoku_rl.qwen import QwenPolicy
-    from sudoku_rl.utils import evaluate_attempts
+    from sudoku_rl.eval.evaluate import evaluate_attempts
+    from sudoku_rl.models.qwen import QwenPolicy
 
     args = parse_args()
     rows = list(load_jsonl(args.data, limit=args.limit))

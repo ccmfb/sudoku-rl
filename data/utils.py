@@ -3,7 +3,7 @@ import json
 from collections.abc import Iterator
 from pathlib import Path
 
-from sudoku_rl.utils import valid_sudoku, valid_solution
+from sudoku_rl.tasks.sudoku import valid_solution, valid_sudoku
 
 
 def load_jsonl(path: str | Path, limit: int | None = None) -> Iterator[dict[str, str]]:
