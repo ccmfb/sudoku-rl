@@ -43,7 +43,57 @@ These paths are ignored by Git and may exist only in a local checkout.
 | `data/rohanrao-sudoku/sudoku.csv` | `rohanrao/sudoku` | `puzzle,solution` | `0`, converted to `.` | 9,000,000 |
 | `data/bryanpark-sudoku/sudoku.csv` | `bryanpark/sudoku` | `quizzes,solutions` | `0`, converted to `.` | 1,000,000 |
 
-Download with the Kaggle CLI after `uv sync` and Kaggle authentication. Place each CSV at the path shown above.
+## Download Sources
+
+Download the source datasets with the Kaggle CLI after `uv sync` and Kaggle authentication.
+
+Radcliffe:
+
+```bash
+mkdir -p data/radcliffe-3-million-sudoku-puzzles-with-ratings
+
+uv run kaggle datasets download \
+  -d radcliffe/3-million-sudoku-puzzles-with-ratings \
+  -f sudoku-3m.csv \
+  -p data/radcliffe-3-million-sudoku-puzzles-with-ratings
+
+unzip data/radcliffe-3-million-sudoku-puzzles-with-ratings/sudoku-3m.csv.zip \
+  -d data/radcliffe-3-million-sudoku-puzzles-with-ratings
+
+rm data/radcliffe-3-million-sudoku-puzzles-with-ratings/sudoku-3m.csv.zip
+```
+
+Rohan Rao:
+
+```bash
+mkdir -p data/rohanrao-sudoku
+
+uv run kaggle datasets download \
+  -d rohanrao/sudoku \
+  -f sudoku.csv \
+  -p data/rohanrao-sudoku
+
+unzip data/rohanrao-sudoku/sudoku.csv.zip \
+  -d data/rohanrao-sudoku
+
+rm data/rohanrao-sudoku/sudoku.csv.zip
+```
+
+Bryan Park:
+
+```bash
+mkdir -p data/bryanpark-sudoku
+
+uv run kaggle datasets download \
+  -d bryanpark/sudoku \
+  -f sudoku.csv \
+  -p data/bryanpark-sudoku
+
+unzip data/bryanpark-sudoku/sudoku.csv.zip \
+  -d data/bryanpark-sudoku
+
+rm data/bryanpark-sudoku/sudoku.csv.zip
+```
 
 ## Build Flow
 
