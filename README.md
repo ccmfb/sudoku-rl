@@ -83,7 +83,6 @@ mkdir -p data/radcliffe-3-million-sudoku-puzzles-with-ratings
 uv run kaggle datasets download -d radcliffe/3-million-sudoku-puzzles-with-ratings -f sudoku-3m.csv -p data/radcliffe-3-million-sudoku-puzzles-with-ratings
 unzip data/radcliffe-3-million-sudoku-puzzles-with-ratings/sudoku-3m.csv.zip -d data/radcliffe-3-million-sudoku-puzzles-with-ratings
 uv run python -m data.split
-uv run python -m data.sample
 uv run python -m data.mask
 ```
 

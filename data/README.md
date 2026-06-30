@@ -25,13 +25,12 @@ data/
   README.md
   utils.py
   split.py
-  sample.py
   mask.py
   examples/
     radcliffe_10.jsonl
 ```
 
-`utils.py` validates and normalizes source rows. `split.py`, `sample.py`, and `mask.py` build the local train and eval artifacts.
+`utils.py` validates and normalizes source rows. `split.py` and `mask.py` build the local train and eval artifacts.
 
 ## Local Source Datasets
 
@@ -112,19 +111,7 @@ data/eval/all.jsonl
 
 With all three source datasets present, the current output has 12,348,899 train rows and 651,101 eval rows.
 
-Train/eval assignment is deterministic by completed solution grid. A solution is assigned to eval when its BLAKE2b hash falls in the held-out 5 percent. Eval keeps one row per held-out solution.
-
-Build the deterministic 100-row eval sample:
-
-```bash
-uv run python -m data.sample
-```
-
-This reads `data/eval/all.jsonl` and writes:
-
-```text
-data/eval/sample_100.jsonl
-```
+Train/eval assignment is deterministic by completed solution grid. A solution is assigned to eval when its BLAKE2b hash falls in the held-out 5 percent. Eval keeps one row per held-out solution. Both `all.jsonl` files are shuffled deterministically after split assembly so prefixes are not tied to source order.
 
 Build near-solved diagnostic eval sets:
 
@@ -132,7 +119,7 @@ Build near-solved diagnostic eval sets:
 uv run python -m data.mask
 ```
 
-This reads `data/eval/sample_100.jsonl`, masks completed solutions, and writes 100-row files with exactly 1, 2, 5, 10, 20, or 40 missing cells:
+This reads disjoint 100-row windows from `data/eval/all.jsonl`, masks completed solutions, and writes files with exactly 1, 2, 5, 10, 20, or 40 missing cells:
 
 ```text
 data/eval/missing_1_100.jsonl
@@ -142,6 +129,14 @@ data/eval/missing_10_100.jsonl
 data/eval/missing_20_100.jsonl
 data/eval/missing_40_100.jsonl
 ```
+
+Masked sets can also be built from train:
+
+```bash
+uv run python -m data.mask --split train --set-size 1000
+```
+
+This writes files like `data/train/missing_1_1000.jsonl` from disjoint windows of `data/train/all.jsonl`.
 
 ## Notes
 
