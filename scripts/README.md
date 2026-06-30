@@ -35,21 +35,9 @@ Evaluate the trained adapter:
 
 ```bash
 python scripts/eval_qwen.py \
-  --data data/eval/radcliffe_100.jsonl \
+  --data data/eval/missing_1_100.jsonl \
   --model Qwen/Qwen3-8B \
-  --adapter runs/qwen3-8b-sft-lora-radcliffe-1000-500steps \
-  --limit 100
-```
-
-Inspect a few generated grids:
-
-```bash
-python scripts/eval_qwen.py \
-  --data data/eval/radcliffe_100.jsonl \
-  --model Qwen/Qwen3-8B \
-  --adapter runs/qwen3-8b-sft-lora-radcliffe-1000-500steps \
-  --limit 10 \
-  --verbose
+  --adapter runs/qwen3-8b-sft-lora-all-500steps
 ```
 
 ## Qwen GRPO LoRA
