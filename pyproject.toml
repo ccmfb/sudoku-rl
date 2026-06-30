@@ -9,6 +9,9 @@ dependencies = [
 ]
 
 [dependency-groups]
+analysis = [
+    "matplotlib>=3.11.0",
+]
 dev = [
     "pytest>=8.0",
     "ruff>=0.13.0",
