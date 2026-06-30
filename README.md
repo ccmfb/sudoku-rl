@@ -104,6 +104,8 @@ uv run python scripts/eval_qwen.py --data data/eval/missing_1_100.jsonl --model 
 
 ## Tiny Scoreboard
 
+[PLOT: Eval difficulty frontier. x = eval set (missing_1, missing_2, missing_5, missing_10, missing_20, missing_40, and optionally actual_1000); y = held-out solve rate; line = method.]
+
 100 puzzles, one missing cell each: `data/eval/missing_1_100.jsonl`.
 
 | model | details | score |
@@ -119,3 +121,5 @@ uv run python scripts/eval_qwen.py --data data/eval/missing_1_100.jsonl --model 
 | Qwen/Qwen3-8B | `thinking=False` | 0.13 |
 | GPT-5.5 | `thinking=False` | 0.64 |
 | Qwen/Qwen3-8B | `runs/qwen3-8b-sft-lora-all-500steps`, `thinking=False`, `max_new_tokens=256`, `batch_size=8` | 0.88 |
+
+[PLOT: Learning curve by training examples. x = training examples seen; y = held-out solve rate on a fixed eval set or fixed eval-suite average; line = method. Count one Sudoku puzzle prompt as one training example: SFT uses the gold solution directly, while GRPO/RFT/STaR may generate multiple attempts per example.]
