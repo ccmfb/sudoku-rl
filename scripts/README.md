@@ -40,4 +40,18 @@ python scripts/eval_qwen.py \
   --adapter runs/qwen3-8b-sft-lora-all-500steps
 ```
 
+## Qwen GRPO LoRA
+
+Train a fresh LoRA adapter from the base model with verifier rewards:
+
+```bash
+python scripts/train_qwen_grpo.py \
+  --train data/train/all.jsonl \
+  --model Qwen/Qwen3-8B \
+  --output-dir runs/qwen3-8b-grpo-lora-all-500steps \
+  --max-steps 500
+```
+
+For a quick smoke run, add `--limit 1000` so TRL only materializes the first 1,000 rows.
+
 Adapters and checkpoints should be written under `runs/`, which is ignored by git.
