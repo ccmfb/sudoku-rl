@@ -21,7 +21,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--eval-set-size", default=100, type=int, help="Suffix size for data/eval/missing_X_SIZE.jsonl files.")
     parser.add_argument("--eval-limit", default=None, type=int, help="Maximum number of eval rows per missing-count level.")
     parser.add_argument("--missing-counts", nargs="+", default=MISSING_COUNTS, type=int, help="Missing-count levels to evaluate and choose from.")
-    parser.add_argument("--target-low", default=0.10, type=float, help="Lowest score treated as learnable.")
+    parser.add_argument("--target-low", default=0.20, type=float, help="Lowest score treated as learnable.")
     parser.add_argument("--target-high", default=0.80, type=float, help="Highest score treated as learnable.")
     parser.add_argument("--batch-size", default=8, type=int, help="Per-device train batch size.")
     parser.add_argument("--gradient-accumulation-steps", default=1, type=int, help="Gradient accumulation steps.")
