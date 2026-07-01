@@ -61,6 +61,12 @@ python scripts/eval_qwen.py \
   --adapter runs/qwen3-8b-sft-lora-all-500steps
 ```
 
+Run the configured SFT adapter benchmark sweep:
+
+```bash
+bash scripts/benchmark_qwen_sft.sh
+```
+
 ## Qwen GRPO LoRA
 
 Train a fresh LoRA adapter from the base model with verifier rewards:
