@@ -11,6 +11,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Fine-tune a Qwen Sudoku policy with GRPO LoRA.")
     parser.add_argument("--train", required=True, type=Path, help="Path to JSONL rows with sudoku and solution fields.")
     parser.add_argument("--model", default="Qwen/Qwen3-8B", help="Qwen model name or checkpoint path.")
+    parser.add_argument("--adapter", default=None, type=Path, help="Optional LoRA adapter checkpoint to continue training.")
     parser.add_argument("--output-dir", required=True, type=Path, help="Directory for LoRA adapter checkpoints.")
     parser.add_argument("--limit", default=None, type=int, help="Maximum number of training rows to load.")
     parser.add_argument("--max-steps", default=500, type=int, help="Maximum optimizer steps.")
@@ -39,7 +40,7 @@ def main() -> None:
     from sudoku_rl.models.peft import make_lora_config
 
     args = parse_args()
-    peft_config = make_lora_config(r=args.lora_r, alpha=args.lora_alpha, dropout=args.lora_dropout)
+    peft_config = None if args.adapter is not None else make_lora_config(r=args.lora_r, alpha=args.lora_alpha, dropout=args.lora_dropout)
 
     train_grpo(
         args.train,
@@ -58,6 +59,7 @@ def main() -> None:
         beta=args.beta,
         loss_type=args.loss_type,
         scale_rewards=args.scale_rewards,
+        adapter_path=args.adapter,
         peft_config=peft_config,
         wandb=args.wandb,
     )
