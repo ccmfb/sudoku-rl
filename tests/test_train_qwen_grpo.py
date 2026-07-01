@@ -56,6 +56,7 @@ def test_train_qwen_grpo_defaults_to_one_prompt_group(monkeypatch, tmp_path) -> 
     assert args.num_generations == 8
     assert args.learning_rate == 1e-6
     assert args.limit is None
+    assert args.wandb is False
 
 
 def test_train_grpo_streams_jsonl_into_trl_trainer(monkeypatch, tmp_path) -> None:
@@ -108,6 +109,7 @@ def test_train_grpo_streams_jsonl_into_trl_trainer(monkeypatch, tmp_path) -> Non
     monkeypatch.setitem(sys.modules, "datasets", types.SimpleNamespace(Dataset=Dataset))
     monkeypatch.setitem(sys.modules, "transformers", types.SimpleNamespace(AutoTokenizer=AutoTokenizer))
     monkeypatch.setitem(sys.modules, "trl", types.SimpleNamespace(GRPOConfig=GRPOConfig, GRPOTrainer=GRPOTrainer))
+    monkeypatch.delenv("WANDB_PROJECT", raising=False)
 
     train_grpo(
         train_path,
@@ -127,6 +129,7 @@ def test_train_grpo_streams_jsonl_into_trl_trainer(monkeypatch, tmp_path) -> Non
         loss_type="dr_grpo",
         scale_rewards="none",
         peft_config="lora-config",
+        wandb=True,
     )
 
     tokenizer = calls["trainer"]["processing_class"]
@@ -154,10 +157,11 @@ def test_train_grpo_streams_jsonl_into_trl_trainer(monkeypatch, tmp_path) -> Non
         "gradient_checkpointing": True,
         "save_steps": 100,
         "logging_steps": 10,
-        "report_to": "none",
+        "report_to": "wandb",
         "remove_unused_columns": False,
         "chat_template_kwargs": {"enable_thinking": False},
         "model_init_kwargs": {"dtype": "bf16"},
+        "run_name": tmp_path.name,
     }
     assert calls["trainer"] == {
         "model": "base-model",

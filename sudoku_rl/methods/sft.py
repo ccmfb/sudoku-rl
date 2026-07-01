@@ -46,8 +46,10 @@ def _iter_sft_examples(train_path: str | Path, example_builder: ExampleBuilder):
         yield example_builder(row)
 
 
-def train_sft(train_path: str | Path, model: str, output_dir: Path, example_builder: ExampleBuilder = format_no_thinking_example, max_steps: int = 500, batch_size: int = 8, gradient_accumulation_steps: int = 8, learning_rate: float = 2e-4, max_seq_length: int = 512, peft_config=None, eos_token: str | None = None) -> None:
+def train_sft(train_path: str | Path, model: str, output_dir: Path, example_builder: ExampleBuilder = format_no_thinking_example, max_steps: int = 500, batch_size: int = 8, gradient_accumulation_steps: int = 8, learning_rate: float = 2e-4, max_seq_length: int = 512, peft_config=None, eos_token: str | None = None, wandb: bool = False) -> None:
     """Train a causal language model with TRL SFT."""
+    import os
+
     import torch
     from datasets import IterableDataset
     from transformers import AutoTokenizer
@@ -66,11 +68,14 @@ def train_sft(train_path: str | Path, model: str, output_dir: Path, example_buil
         "gradient_checkpointing": True,
         "save_steps": 100,
         "logging_steps": 10,
-        "report_to": "none",
+        "report_to": "wandb" if wandb else "none",
         "completion_only_loss": True,
         "model_init_kwargs": {"dtype": torch.bfloat16},
     }
     if eos_token is not None: config_kwargs["eos_token"] = eos_token
+    if wandb:
+        os.environ.setdefault("WANDB_PROJECT", "sudoku-rl")
+        config_kwargs["run_name"] = Path(output_dir).name
 
     trainer = SFTTrainer(
         model=model,

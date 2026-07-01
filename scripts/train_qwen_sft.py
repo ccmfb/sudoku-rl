@@ -21,6 +21,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--lora-r", default=16, type=int, help="LoRA rank.")
     parser.add_argument("--lora-alpha", default=32, type=int, help="LoRA alpha.")
     parser.add_argument("--lora-dropout", default=0.05, type=float, help="LoRA dropout.")
+    parser.add_argument("--wandb", action="store_true", help="Log TRL training metrics to W&B.")
 
     return parser.parse_args()
 
@@ -46,6 +47,7 @@ def main() -> None:
         max_seq_length=args.max_seq_length,
         peft_config=peft_config,
         eos_token=QWEN_CHAT_EOS_TOKEN,
+        wandb=args.wandb,
     )
 
 

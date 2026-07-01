@@ -23,6 +23,7 @@ gpu = [
     "torch>=2.3",
     "transformers>=4.51.0",
     "trl>=0.24",
+    "wandb>=0.20",
 ]
 
 [tool.uv]
