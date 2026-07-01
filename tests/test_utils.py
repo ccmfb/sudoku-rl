@@ -1,6 +1,6 @@
 import pytest
 
-from sudoku_rl.eval.evaluate import evaluate_attempts
+from sudoku_rl.eval.evaluate import evaluate_attempt_rows, evaluate_attempts
 from sudoku_rl.tasks.rewards import score_attempt
 from sudoku_rl.tasks.sudoku import format_prompt, print_sudoku
 
@@ -120,6 +120,24 @@ def test_evaluate_attempts_batches_prompts() -> None:
     assert policy.batches == [
         [format_prompt(SUDOKU), format_prompt(SUDOKU)],
         [format_prompt(SUDOKU)],
+    ]
+
+
+def test_evaluate_attempt_rows_returns_question_results() -> None:
+    class FixedPolicy:
+        def attempt(self, prompt: str) -> str:
+            return SOLUTION
+
+    results = evaluate_attempt_rows([{"sudoku": SUDOKU, "solution": SOLUTION}], FixedPolicy())
+
+    assert results == [
+        {
+            "index": 0,
+            "sudoku": SUDOKU,
+            "solution": SOLUTION,
+            "attempt": SOLUTION,
+            "score": 1.0,
+        }
     ]
 
 

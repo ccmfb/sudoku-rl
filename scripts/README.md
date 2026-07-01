@@ -13,6 +13,14 @@ python scripts/eval_qwen.py \
   --limit 100
 ```
 
+Each Qwen eval writes a timestamped JSONL record under `results/`. The first line is the run summary and the remaining lines are per-question results with attempts and scores.
+
+Run the configured eval benchmark sweep:
+
+```bash
+bash scripts/benchmark_qwen.sh
+```
+
 ## Qwen SFT LoRA
 
 Install the GPU and training dependencies:
