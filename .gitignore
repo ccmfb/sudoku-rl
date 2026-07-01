@@ -12,4 +12,5 @@ data/train/
 data/eval/
 
 runs/
+wandb/
 analysis/

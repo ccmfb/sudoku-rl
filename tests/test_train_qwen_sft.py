@@ -55,6 +55,7 @@ def test_train_qwen_sft_defaults_to_no_thinking_and_batch_eight(monkeypatch, tmp
 
     assert args.target == "no-thinking"
     assert args.batch_size == 8
+    assert args.wandb is False
 
 
 def test_train_sft_streams_jsonl_into_trl_trainer(monkeypatch, tmp_path) -> None:
@@ -99,6 +100,7 @@ def test_train_sft_streams_jsonl_into_trl_trainer(monkeypatch, tmp_path) -> None
     monkeypatch.setitem(sys.modules, "datasets", types.SimpleNamespace(IterableDataset=IterableDataset))
     monkeypatch.setitem(sys.modules, "transformers", types.SimpleNamespace(AutoTokenizer=AutoTokenizer))
     monkeypatch.setitem(sys.modules, "trl", types.SimpleNamespace(SFTConfig=SFTConfig, SFTTrainer=SFTTrainer))
+    monkeypatch.delenv("WANDB_PROJECT", raising=False)
 
     train_sft(
         train_path,
@@ -112,6 +114,7 @@ def test_train_sft_streams_jsonl_into_trl_trainer(monkeypatch, tmp_path) -> None
         max_seq_length=128,
         peft_config="lora-config",
         eos_token="<eos>",
+        wandb=True,
     )
 
     assert calls["dataset_items"] == [{"solution": SOLUTION}]
@@ -127,10 +130,11 @@ def test_train_sft_streams_jsonl_into_trl_trainer(monkeypatch, tmp_path) -> None
         "gradient_checkpointing": True,
         "save_steps": 100,
         "logging_steps": 10,
-        "report_to": "none",
+        "report_to": "wandb",
         "completion_only_loss": True,
         "model_init_kwargs": {"dtype": "bf16"},
         "eos_token": "<eos>",
+        "run_name": tmp_path.name,
     }
     assert calls["trainer"] == {
         "model": "base-model",
