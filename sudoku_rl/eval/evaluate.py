@@ -4,10 +4,9 @@ from sudoku_rl.tasks.rewards import score_attempt
 from sudoku_rl.tasks.sudoku import format_prompt, print_sudoku
 
 
-def evaluate_attempts(rows: Iterable[dict[str, str]], policy, verbose: bool = False, batch_size: int = 1) -> float:
-    """Score generated attempts for sudoku rows."""
-    total_score = 0.0
-    count = 0
+def evaluate_attempt_rows(rows: Iterable[dict[str, str]], policy, verbose: bool = False, batch_size: int = 1) -> list[dict[str, object]]:
+    """Score generated attempts and return one result row per sudoku."""
+    results = []
     rows = list(rows)
 
     for batch_start in range(0, len(rows), batch_size):
@@ -21,8 +20,7 @@ def evaluate_attempts(rows: Iterable[dict[str, str]], policy, verbose: bool = Fa
             solution = row["solution"]
             attempt = attempts[offset]
             score = score_attempt(attempt, sudoku, solution)
-            total_score += score
-            count += 1
+            results.append({"index": row_index, "sudoku": sudoku, "solution": solution, "attempt": attempt, "score": score})
 
             if not verbose: continue
 
@@ -36,6 +34,12 @@ def evaluate_attempts(rows: Iterable[dict[str, str]], policy, verbose: bool = Fa
             print(f"SCORE: {score}")
             print("=*" * 50)
 
-    if count == 0: return 0.0
+    return results
 
-    return total_score / count
+
+def evaluate_attempts(rows: Iterable[dict[str, str]], policy, verbose: bool = False, batch_size: int = 1) -> float:
+    """Score generated attempts for sudoku rows."""
+    results = evaluate_attempt_rows(rows, policy, verbose=verbose, batch_size=batch_size)
+    if not results: return 0.0
+
+    return sum(float(row["score"]) for row in results) / len(results)
