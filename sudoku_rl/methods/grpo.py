@@ -43,7 +43,7 @@ def _iter_grpo_examples(train_path: str | Path, limit: int | None = None):
         yield format_grpo_example(row)
 
 
-def train_grpo(train_path: str | Path, model: str, output_dir: Path, limit: int | None = None, max_steps: int = 500, batch_size: int = 8, gradient_accumulation_steps: int = 1, learning_rate: float = 1e-6, max_completion_length: int = 128, num_generations: int = 8, temperature: float = 1.0, top_p: float = 1.0, top_k: int = 0, beta: float = 0.0, loss_type: str = "dapo", scale_rewards: str = "group", peft_config=None, wandb: bool = False) -> None:
+def train_grpo(train_path: str | Path, model: str, output_dir: Path, limit: int | None = None, max_steps: int = 500, batch_size: int = 8, gradient_accumulation_steps: int = 1, learning_rate: float = 1e-6, max_completion_length: int = 128, num_generations: int = 8, temperature: float = 1.0, top_p: float = 1.0, top_k: int = 0, beta: float = 0.0, loss_type: str = "dapo", scale_rewards: str = "group", adapter_path: str | Path | None = None, peft_config=None, wandb: bool = False) -> None:
     """Train a causal language model with TRL GRPO."""
     import os
 
@@ -56,6 +56,8 @@ def train_grpo(train_path: str | Path, model: str, output_dir: Path, limit: int 
     tokenizer = AutoTokenizer.from_pretrained(model)
     tokenizer.padding_side = "left"
     if tokenizer.pad_token is None: tokenizer.pad_token = tokenizer.eos_token
+    trainer_model = model
+    trainer_peft_config = peft_config
     config_kwargs = {
         "output_dir": str(output_dir),
         "max_steps": max_steps,
@@ -77,19 +79,27 @@ def train_grpo(train_path: str | Path, model: str, output_dir: Path, limit: int 
         "report_to": "wandb" if wandb else "none",
         "remove_unused_columns": False,
         "chat_template_kwargs": {"enable_thinking": False},
-        "model_init_kwargs": {"dtype": torch.bfloat16},
     }
+    if adapter_path is None:
+        config_kwargs["model_init_kwargs"] = {"dtype": torch.bfloat16}
+    else:
+        from peft import PeftModel
+        from transformers import AutoModelForCausalLM
+
+        base_model = AutoModelForCausalLM.from_pretrained(model, torch_dtype=torch.bfloat16, device_map="auto")
+        trainer_model = PeftModel.from_pretrained(base_model, adapter_path, is_trainable=True)
+        trainer_peft_config = None
     if wandb:
         os.environ.setdefault("WANDB_PROJECT", "sudoku-rl")
         config_kwargs["run_name"] = Path(output_dir).name
 
     trainer = GRPOTrainer(
-        model=model,
+        model=trainer_model,
         reward_funcs=sudoku_reward,
         args=GRPOConfig(**config_kwargs),
         train_dataset=train_dataset,
         processing_class=tokenizer,
-        peft_config=peft_config,
+        peft_config=trainer_peft_config,
     )
 
     trainer.train()
