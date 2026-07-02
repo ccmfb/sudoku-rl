@@ -56,6 +56,7 @@ def test_train_qwen_grpo_defaults_to_one_prompt_group(monkeypatch, tmp_path) -> 
     assert args.num_generations == 8
     assert args.learning_rate == 1e-6
     assert args.limit is None
+    assert args.adapter is None
     assert args.wandb is False
 
 
@@ -173,3 +174,88 @@ def test_train_grpo_streams_jsonl_into_trl_trainer(monkeypatch, tmp_path) -> Non
     }
     assert calls["trained"] is True
     assert calls["saved_model"] == str(tmp_path)
+
+
+def test_train_grpo_continues_from_trainable_adapter(monkeypatch, tmp_path) -> None:
+    calls = {}
+    train_path = tmp_path / "train.jsonl"
+    adapter_path = tmp_path / "adapter"
+    train_path.write_text(json.dumps(ROW) + "\n")
+
+    class Tokenizer:
+        def __init__(self):
+            self.padding_side = None
+            self.pad_token = None
+            self.eos_token = "<eos>"
+
+    class AutoTokenizer:
+        @staticmethod
+        def from_pretrained(model):
+            calls["tokenizer_model"] = model
+            return Tokenizer()
+
+    class AutoModelForCausalLM:
+        @staticmethod
+        def from_pretrained(model, torch_dtype, device_map):
+            calls["base_model"] = {"model": model, "torch_dtype": torch_dtype, "device_map": device_map}
+            return "base-model-object"
+
+    class PeftModel:
+        @staticmethod
+        def from_pretrained(model, adapter, is_trainable):
+            calls["adapter_model"] = {"model": model, "adapter": adapter, "is_trainable": is_trainable}
+            return "trainable-adapter-model"
+
+    class GRPOConfig:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+            calls["config"] = self
+
+    class GRPOTrainer:
+        def __init__(self, model, reward_funcs, args, train_dataset, processing_class, peft_config):
+            calls["trainer"] = {
+                "model": model,
+                "reward_funcs": reward_funcs,
+                "args": args,
+                "train_dataset": train_dataset,
+                "processing_class": processing_class,
+                "peft_config": peft_config,
+            }
+
+        def train(self):
+            calls["trained"] = True
+
+        def save_model(self, path):
+            calls["saved_model"] = path
+
+    class Dataset:
+        @staticmethod
+        def from_generator(generator, gen_kwargs):
+            calls["dataset_items"] = list(generator(**gen_kwargs))
+            return "map-style-dataset"
+
+    monkeypatch.setitem(sys.modules, "torch", types.SimpleNamespace(bfloat16="bf16"))
+    monkeypatch.setitem(sys.modules, "datasets", types.SimpleNamespace(Dataset=Dataset))
+    monkeypatch.setitem(sys.modules, "peft", types.SimpleNamespace(PeftModel=PeftModel))
+    monkeypatch.setitem(sys.modules, "transformers", types.SimpleNamespace(AutoTokenizer=AutoTokenizer, AutoModelForCausalLM=AutoModelForCausalLM))
+    monkeypatch.setitem(sys.modules, "trl", types.SimpleNamespace(GRPOConfig=GRPOConfig, GRPOTrainer=GRPOTrainer))
+
+    train_grpo(
+        train_path,
+        model="base-model",
+        output_dir=tmp_path / "out",
+        adapter_path=adapter_path,
+        peft_config="unused-lora-config",
+        max_steps=2,
+    )
+
+    assert calls["base_model"] == {"model": "base-model", "torch_dtype": "bf16", "device_map": "auto"}
+    assert calls["adapter_model"] == {"model": "base-model-object", "adapter": adapter_path, "is_trainable": True}
+    assert calls["dataset_items"] == [format_grpo_example(ROW)]
+    assert calls["config"].kwargs["output_dir"] == str(tmp_path / "out")
+    assert calls["config"].kwargs["max_steps"] == 2
+    assert "model_init_kwargs" not in calls["config"].kwargs
+    assert calls["trainer"]["model"] == "trainable-adapter-model"
+    assert calls["trainer"]["peft_config"] is None
+    assert calls["trained"] is True
+    assert calls["saved_model"] == str(tmp_path / "out")

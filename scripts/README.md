@@ -13,6 +13,14 @@ python scripts/eval_qwen.py \
   --limit 100
 ```
 
+Each Qwen eval writes a timestamped JSONL record under `results/`. The first line is the run summary and the remaining lines are per-question results with attempts and scores.
+
+Run the configured eval benchmark sweep:
+
+```bash
+bash scripts/benchmark_qwen.sh
+```
+
 ## Qwen SFT LoRA
 
 Install the GPU and training dependencies:
@@ -53,6 +61,12 @@ python scripts/eval_qwen.py \
   --adapter runs/qwen3-8b-sft-lora-all-500steps
 ```
 
+Run the configured SFT adapter benchmark sweep:
+
+```bash
+bash scripts/benchmark_qwen_sft.sh
+```
+
 ## Qwen GRPO LoRA
 
 Train a fresh LoRA adapter from the base model with verifier rewards:
@@ -68,5 +82,39 @@ python scripts/train_qwen_grpo.py \
 The same `--wandb` flag works for GRPO.
 
 For a quick smoke run, add `--limit 1000` so TRL only materializes the first 1,000 rows.
+
+Continue from an existing LoRA adapter:
+
+```bash
+python scripts/train_qwen_grpo.py \
+  --train data/train/missing_10_10000.jsonl \
+  --model Qwen/Qwen3-8B \
+  --adapter runs/qwen3-8b-sft-lora-all-500steps \
+  --output-dir runs/qwen3-8b-grpo-lora-missing-10-500steps \
+  --max-steps 500
+```
+
+## Qwen Dynamic GRPO Curriculum
+
+Build masked train sets first:
+
+```bash
+python -m data.mask --split train --set-size 10000
+```
+
+Then run short GRPO chunks. Each round evaluates all configured missing-count eval sets,
+chooses the hardest level with a score between `--target-low` and `--target-high`, trains on
+that `data/train/missing_X_10000.jsonl` file, and continues from the newly saved adapter:
+
+```bash
+python scripts/train_qwen_grpo_curriculum.py \
+  --model Qwen/Qwen3-8B \
+  --output-dir runs/qwen3-8b-grpo-curriculum \
+  --rounds 20 \
+  --steps-per-round 100
+```
+
+Round decisions are printed. Add `--wandb` to log curriculum metrics and GRPO training metrics
+to W&B.
 
 Adapters and checkpoints should be written under `runs/`, which is ignored by git.
